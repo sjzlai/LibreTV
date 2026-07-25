@@ -1,0 +1,39 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        # 核心：在此处将 GitHub 的环境变量注入到构建命令中
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}       # 引用 Repository Variable
+          VITE_APP_KEY: ${{ secrets.MY_SECRET_KEY }}   # 引用 Repository Secret
+        run: npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist' # 替换为你的构建输出目录（如 dist, build, out 等）
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
